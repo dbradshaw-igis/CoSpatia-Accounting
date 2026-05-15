@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Vendors{% endblock %}
+{% block content %}
+<h1>Vendors</h1>
+<p class="lead">The people and businesses you pay. A vendor marked 1099-eligible
+is included in the 1099 vendor report — mark unincorporated contractors and
+service providers, not corporations.</p>
+
+{% if saved %}<p class="ok">Vendor saved.</p>{% endif %}
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<table>
+  <thead>
+    <tr><th>Name</th><th>TIN</th><th>1099</th><th>Terms</th></tr>
+  </thead>
+  <tbody>
+    {% for v in vendors %}
+    <tr>
+      <td>{{ v.name }}</td>
+      <td class="muted">{{ v.tin or "—" }}</td>
+      <td>{% if v.is_1099 %}<span class="tag">{{ v.box_1099 or "1099" }}</span>{% else %}—{% endif %}</td>
+      <td>Net {{ v.terms_days }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="muted">No vendors yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p><a href="/vendors/1099">1099 Vendor Report</a></p>
+
+<h2>Add a Vendor</h2>
+<form method="post" action="/vendors" class="stack-form">
+  <label>Name
+    <input type="text" name="name" required>
+  </label>
+  <label>Address
+    <input type="text" name="address">
+  </label>
+  <label>TIN / EIN / SSN
+    <input type="text" name="tin" placeholder="From the vendor's W-9">
+  </label>
+  <label class="checkbox">
+    <input type="checkbox" name="is_1099" value="1">
+    1099-eligible (issue a 1099 for service payments)
+  </label>
+  <label>1099 Box
+    <select name="box_1099">
+      <option value="">—</option>
+      <option value="1099-NEC">1099-NEC (nonemployee compensation)</option>
+      <option value="1099-MISC">1099-MISC (rent, other)</option>
+    </select>
+  </label>
+  <label>Default Expense Account
+    <select name="default_expense_account_id">
+      <option value="">—</option>
+      {% for a in expense_accounts %}
+      <option value="{{ a.id }}">{{ a.account_number }} · {{ a.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Payment Terms (days)
+    <input type="number" name="terms_days" value="30" min="0" max="365">
+  </label>
+  <button type="submit">Add Vendor</button>
+</form>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Bills{% endblock %}
+{% block content %}
+<h1>Bills</h1>
+<p class="lead">Money you owe vendors. Every bill posts to the ledger when
+created — debit the expense or asset account, credit Accounts Payable. The
+balance column is what is still owed.</p>
+
+<p>
+  <a class="button-link" href="/bills/new">New Bill</a>
+  <a class="button-link" href="/ap-aging">A/P Aging</a>
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Number</th><th>Vendor</th><th>Date</th><th>Due</th>
+      <th>Status</th><th class="num">Total</th><th class="num">Balance</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in bills %}
+    <tr>
+      <td><a href="/bills/{{ row.bill.id }}">{{ row.bill.bill_number or "—" }}</a></td>
+      <td>{{ row.vendor_name }}</td>
+      <td>{{ row.bill.bill_date }}</td>
+      <td class="{{ 'overdue' if row.balance > 0 and row.bill.due_date < today else '' }}">
+        {{ row.bill.due_date }}</td>
+      <td><span class="status status-{{ row.bill.status }}">{{ row.bill.status }}</span></td>
+      <td class="num">{{ row.total | money }}</td>
+      <td class="num">{{ row.balance | money }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="muted">No bills yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -138,6 +138,64 @@ CREATE TABLE IF NOT EXISTS bank_transactions (
     created_at       TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS vendors (
+    id                         INTEGER PRIMARY KEY,
+    company_id                 INTEGER NOT NULL REFERENCES companies(id),
+    name                       TEXT NOT NULL,
+    address                    TEXT,
+    tin                        TEXT,
+    is_1099                    INTEGER NOT NULL DEFAULT 0,
+    box_1099                   TEXT,
+    default_expense_account_id INTEGER REFERENCES accounts(id),
+    terms_days                 INTEGER NOT NULL DEFAULT 30,
+    UNIQUE (company_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS bills (
+    id               INTEGER PRIMARY KEY,
+    company_id       INTEGER NOT NULL REFERENCES companies(id),
+    vendor_id        INTEGER NOT NULL REFERENCES vendors(id),
+    bill_number      TEXT,
+    bill_date        TEXT NOT NULL,
+    due_date         TEXT NOT NULL,
+    memo             TEXT,
+    status           TEXT NOT NULL DEFAULT 'open'
+                         CHECK (status IN ('open','partial','paid','void')),
+    journal_entry_id INTEGER REFERENCES journal_entries(id),
+    created_at       TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bill_lines (
+    id           INTEGER PRIMARY KEY,
+    bill_id      INTEGER NOT NULL REFERENCES bills(id) ON DELETE CASCADE,
+    description  TEXT,
+    account_id   INTEGER NOT NULL REFERENCES accounts(id),
+    amount_cents INTEGER NOT NULL CHECK (amount_cents > 0)
+);
+
+CREATE TABLE IF NOT EXISTS bill_payments (
+    id                   INTEGER PRIMARY KEY,
+    company_id           INTEGER NOT NULL REFERENCES companies(id),
+    vendor_id            INTEGER NOT NULL REFERENCES vendors(id),
+    payment_date         TEXT NOT NULL,
+    amount_cents         INTEGER NOT NULL CHECK (amount_cents > 0),
+    paid_from_account_id INTEGER NOT NULL REFERENCES accounts(id),
+    payment_method       TEXT NOT NULL DEFAULT 'check'
+                             CHECK (payment_method IN
+                                    ('check','ach','cash','card')),
+    reference            TEXT,
+    memo                 TEXT,
+    journal_entry_id     INTEGER REFERENCES journal_entries(id),
+    created_at           TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bill_payment_applications (
+    id           INTEGER PRIMARY KEY,
+    payment_id   INTEGER NOT NULL REFERENCES bill_payments(id) ON DELETE CASCADE,
+    bill_id      INTEGER NOT NULL REFERENCES bills(id),
+    amount_cents INTEGER NOT NULL CHECK (amount_cents > 0)
+);
+
 CREATE TABLE IF NOT EXISTS users (
     id            INTEGER PRIMARY KEY,
     username      TEXT NOT NULL UNIQUE,
@@ -158,6 +216,10 @@ CREATE INDEX IF NOT EXISTS idx_invoices_company ON invoices(company_id);
 CREATE INDEX IF NOT EXISTS idx_invlines_invoice ON invoice_lines(invoice_id);
 CREATE INDEX IF NOT EXISTS idx_payapp_invoice   ON payment_applications(invoice_id);
 CREATE INDEX IF NOT EXISTS idx_banktxn_company  ON bank_transactions(company_id);
+CREATE INDEX IF NOT EXISTS idx_bills_company    ON bills(company_id);
+CREATE INDEX IF NOT EXISTS idx_billlines_bill   ON bill_lines(bill_id);
+CREATE INDEX IF NOT EXISTS idx_billpay_company  ON bill_payments(company_id);
+CREATE INDEX IF NOT EXISTS idx_billpayapp_bill  ON bill_payment_applications(bill_id);
 """
 
 

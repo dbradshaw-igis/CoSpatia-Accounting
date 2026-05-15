@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Pay Bills{% endblock %}
+{% block content %}
+<h1>Pay Bills</h1>
+<p class="lead">A bill payment debits Accounts Payable and credits the account
+it came from. The payment method matters: card payments are left out of the
+1099 vendor totals, since the card processor reports those.</p>
+
+{% if error %}
+  <p class="{{ 'ok' if 'recorded' in error else 'error' }}">{{ error }}</p>
+{% endif %}
+
+<form method="get" action="/bill-payments/new" class="inline-form">
+  <label>Vendor
+    <select name="vendor_id" onchange="this.form.submit()">
+      <option value="">— choose —</option>
+      {% for v in vendors %}
+      <option value="{{ v.id }}"
+        {{ 'selected' if vendor and v.id == vendor.id }}>{{ v.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <noscript><button type="submit">Continue</button></noscript>
+</form>
+
+{% if vendor %}
+  {% if open_bills %}
+  <form method="post" action="/bill-payments" class="entry-form">
+    <input type="hidden" name="vendor_id" value="{{ vendor.id }}">
+    <div class="header-fields">
+      <label>Payment Date
+        <input type="date" name="payment_date" value="{{ today }}" required>
+      </label>
+      <label>Paid From
+        <select name="paid_from_account_id" required>
+          <option value="">—</option>
+          {% for s in sources %}
+          <option value="{{ s.id }}">{{ s.account_number }} · {{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Method
+        <select name="payment_method">
+          <option value="check">Check</option>
+          <option value="ach">ACH / Bank Transfer</option>
+          <option value="cash">Cash</option>
+          <option value="card">Credit Card</option>
+        </select>
+      </label>
+      <label>Reference
+        <input type="text" name="reference" placeholder="Check #, confirmation">
+      </label>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Bill</th><th>Date</th><th>Due</th>
+          <th class="num">Balance</th><th class="num">Amount to Pay</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in open_bills %}
+        <tr>
+          <td><a href="/bills/{{ row.bill.id }}">{{ row.bill.bill_number or row.bill.id }}</a></td>
+          <td>{{ row.bill.bill_date }}</td>
+          <td>{{ row.bill.due_date }}</td>
+          <td class="num">{{ row.balance | money }}</td>
+          <td><input type="text" name="apply_{{ row.bill.id }}"
+                     class="num" inputmode="decimal"></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <button type="submit">Record Payment</button>
+  </form>
+  {% else %}
+  <p class="muted">{{ vendor.name }} has no open bills.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

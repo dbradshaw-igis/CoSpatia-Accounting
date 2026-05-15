@@ -344,7 +344,7 @@ def ar_aging(conn, company_id, as_of):
             "balance": balance, "bucket": bucket,
             "days_overdue": max(overdue, 0),
         })
-    return {"as_of": as_of, "buckets": AGING_BUCKETS, "items": items,
+    return {"as_of": as_of, "buckets": AGING_BUCKETS, "rows": items,
             "totals": totals, "grand_total": sum(totals.values())}
 
 

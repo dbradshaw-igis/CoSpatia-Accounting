@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}New Bill{% endblock %}
+{% block content %}
+<h1>New Bill</h1>
+<p class="lead">Each line debits an expense or asset account; the total credits
+Accounts Payable. The bill number is the vendor's own invoice number. Leave the
+due date blank to use the vendor's payment terms.</p>
+
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+{% if not vendors %}
+<p class="note">Add a vendor first on the <a href="/vendors">Vendors</a> page.</p>
+{% else %}
+<form method="post" action="/bills" class="entry-form">
+  <div class="header-fields">
+    <label>Vendor
+      <select name="vendor_id" required>
+        <option value="">—</option>
+        {% for v in vendors %}
+        <option value="{{ v.id }}">{{ v.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Bill Number
+      <input type="text" name="bill_number" placeholder="Vendor's invoice #">
+    </label>
+    <label>Bill Date
+      <input type="date" name="bill_date" value="{{ today }}" required>
+    </label>
+    <label>Due Date
+      <input type="date" name="due_date">
+    </label>
+    <label class="grow">Memo
+      <input type="text" name="memo">
+    </label>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Description</th><th>Account</th><th class="num">Amount</th></tr>
+    </thead>
+    <tbody>
+      {% for i in rows %}
+      <tr>
+        <td><input type="text" name="description_{{ i }}"></td>
+        <td>
+          <select name="account_{{ i }}">
+            <option value="">—</option>
+            {% for a in accounts %}
+            <option value="{{ a.id }}">{{ a.account_number }} · {{ a.name }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td><input type="text" name="amount_{{ i }}" class="num" inputmode="decimal"></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <button type="submit">Create &amp; Post Bill</button>
+</form>
+{% endif %}
+{% endblock %}

@@ -11,7 +11,7 @@ import csv
 import io
 from datetime import datetime, timezone
 
-from . import ar, charts, reports
+from . import ap, ar, charts, reports, taxconfig
 from .ledger import PostingError
 
 
@@ -156,7 +156,7 @@ def ar_aging_csv(conn, company, as_of):
     buf, w = _writer()
     w.writerow(["invoice_number", "customer", "invoice_date", "due_date",
                 "days_overdue", "aging_bucket", "balance"])
-    for it in aging["items"]:
+    for it in aging["rows"]:
         inv = it["invoice"]
         w.writerow([inv["invoice_number"], it["customer_name"],
                     inv["invoice_date"], inv["due_date"],
@@ -166,6 +166,41 @@ def ar_aging_csv(conn, company, as_of):
         w.writerow(["", "", "", "", "", bucket,
                     _money(aging["totals"][bucket])])
     w.writerow(["", "", "", "", "", "Total", _money(aging["grand_total"])])
+    return buf.getvalue()
+
+
+def ap_aging_csv(conn, company, as_of):
+    aging = ap.ap_aging(conn, company["id"], as_of)
+    buf, w = _writer()
+    w.writerow(["bill_number", "vendor", "bill_date", "due_date",
+                "days_overdue", "aging_bucket", "balance"])
+    for it in aging["rows"]:
+        bill = it["bill"]
+        w.writerow([bill["bill_number"] or "", it["vendor_name"],
+                    bill["bill_date"], bill["due_date"],
+                    it["days_overdue"], it["bucket"], _money(it["balance"])])
+    w.writerow([])
+    for bucket in aging["buckets"]:
+        w.writerow(["", "", "", "", "", bucket,
+                    _money(aging["totals"][bucket])])
+    w.writerow(["", "", "", "", "", "Total", _money(aging["grand_total"])])
+    return buf.getvalue()
+
+
+def vendor_1099_csv(conn, company, year):
+    """1099 vendor figures for a calendar year — the file an e-file service or
+    the accountant uses to prepare the 1099-NEC forms."""
+    threshold = taxconfig.form_1099_nec_threshold_cents(year)
+    report = ap.vendor_1099_report(conn, company["id"], year, threshold)
+    buf, w = _writer()
+    w.writerow(["vendor", "tin", "address", "box", "amount_paid",
+                "over_threshold", "missing_tin"])
+    for r in report["rows"]:
+        v = r["vendor"]
+        w.writerow([v["name"], v["tin"] or "", v["address"] or "",
+                    v["box_1099"] or "", _money(r["total"]),
+                    "yes" if r["over_threshold"] else "no",
+                    "yes" if r["missing_tin"] else "no"])
     return buf.getvalue()
 
 

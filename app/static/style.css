@@ -262,13 +262,14 @@ fieldset {
   gap: 0.5rem;
 }
 fieldset legend { font-size: 0.82rem; color: var(--muted); padding: 0 0.3rem; }
-label.radio {
+label.radio, label.checkbox {
   flex-direction: row;
   align-items: center;
   gap: 0.4rem;
   color: var(--ink);
   font-size: 0.9rem;
 }
+label.checkbox input { width: auto; }
 .split-cols { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; }
 
 ul.checks { list-style: none; padding: 0; margin: 0 0 1.2rem; }

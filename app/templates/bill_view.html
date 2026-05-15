@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Bill {{ d.bill.bill_number or d.bill.id }}{% endblock %}
+{% block content %}
+<h1>Bill {{ d.bill.bill_number or "(no number)" }}</h1>
+<p class="lead">
+  {{ d.vendor.name }} &middot; dated {{ d.bill.bill_date }} &middot;
+  due {{ d.bill.due_date }} &middot;
+  <span class="status status-{{ d.bill.status }}">{{ d.bill.status }}</span>
+</p>
+
+<table>
+  <thead>
+    <tr><th>Description</th><th>Account</th><th class="num">Amount</th></tr>
+  </thead>
+  <tbody>
+    {% for line in d.lines %}
+    <tr>
+      <td>{{ line.description or "—" }}</td>
+      <td class="muted">{{ line.account_number }} · {{ line.account_name }}</td>
+      <td class="num">{{ line.amount_cents | money }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr><td colspan="2">Bill Total</td>
+        <td class="num">{{ d.total | money }}</td></tr>
+    <tr><td colspan="2">Paid</td>
+        <td class="num">{{ d.paid | money }}</td></tr>
+    <tr><td colspan="2">Balance Due</td>
+        <td class="num">{{ d.balance | money }}</td></tr>
+  </tfoot>
+</table>
+
+{% if d.bill.memo %}<p class="muted">{{ d.bill.memo }}</p>{% endif %}
+
+<p>
+  {% if d.balance > 0 %}
+  <a class="button-link" href="/bill-payments/new?vendor_id={{ d.vendor.id }}">Pay Bill</a>
+  {% endif %}
+  <a class="button-link" href="/bills">Back to Bills</a>
+</p>
+{% endblock %}

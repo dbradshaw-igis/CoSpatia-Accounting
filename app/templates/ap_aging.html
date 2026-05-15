@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}A/P Aging{% endblock %}
+{% block content %}
+<h1>A/P Aging</h1>
+<p class="lead">Open bills as of the date below, grouped by how far past due
+they are. The total ties to the Accounts Payable balance on the balance
+sheet.</p>
+
+<form method="get" action="/ap-aging" class="inline-form">
+  <label>As of <input type="date" name="as_of" value="{{ as_of }}"></label>
+  <button type="submit">Show</button>
+</form>
+
+<table>
+  <thead>
+    <tr>
+      <th>Bill</th><th>Vendor</th><th>Due</th><th>Bucket</th>
+      <th class="num">Balance</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for it in aging.rows %}
+    <tr>
+      <td><a href="/bills/{{ it.bill.id }}">{{ it.bill.bill_number or it.bill.id }}</a></td>
+      <td>{{ it.vendor_name }}</td>
+      <td>{{ it.bill.due_date }}</td>
+      <td>{{ it.bucket }}</td>
+      <td class="num">{{ it.balance | money }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">No open bills as of this date.</td></tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    {% for bucket in aging.buckets %}
+    <tr><td colspan="4">{{ bucket }}</td>
+        <td class="num">{{ aging.totals[bucket] | money }}</td></tr>
+    {% endfor %}
+    <tr class="grand-total"><td colspan="4">Total Owed</td>
+        <td class="num">{{ aging.grand_total | money }}</td></tr>
+  </tfoot>
+</table>
+{% endblock %}

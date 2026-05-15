@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}1099 Vendor Report{% endblock %}
+{% block content %}
+<h1>1099 Vendor Report</h1>
+<p class="lead">1099-eligible vendors and what you paid them in the calendar
+year, by payment date. Credit-card payments are excluded — the card processor
+reports those. Vendors at or above the reporting threshold need a 1099; any
+missing a TIN are flagged so you can collect a W-9 before filing.</p>
+
+<form method="get" action="/vendors/1099" class="inline-form">
+  <label>Year
+    <input type="number" name="year" value="{{ report.year }}"
+           min="2000" max="2100">
+  </label>
+  <button type="submit">Show</button>
+</form>
+
+<p class="muted">Reporting threshold for {{ report.year }}:
+{{ report.threshold_cents | money }}. {{ report.over_threshold_count }}
+vendor(s) at or above it
+{% if report.missing_tin_count %}
+ — <span class="error">{{ report.missing_tin_count }} of those missing a
+TIN</span>{% endif %}.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Vendor</th><th>TIN</th><th>Box</th>
+      <th class="num">Paid in {{ report.year }}</th><th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in report.rows %}
+    <tr>
+      <td>{{ r.vendor.name }}</td>
+      <td class="{{ 'error' if r.missing_tin and r.over_threshold else 'muted' }}">
+        {{ r.vendor.tin or "missing" }}</td>
+      <td>{{ r.vendor.box_1099 or "—" }}</td>
+      <td class="num">{{ r.total | money }}</td>
+      <td>
+        {% if r.over_threshold %}
+          <span class="tag">1099 required</span>
+          {% if r.missing_tin %}<span class="tag voidtag">No TIN</span>{% endif %}
+        {% else %}
+          <span class="muted">below threshold</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">No 1099 vendors were paid in {{ report.year }}.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

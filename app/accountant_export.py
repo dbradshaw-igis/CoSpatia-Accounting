@@ -15,7 +15,7 @@ import re
 import zipfile
 from datetime import datetime, timezone
 
-from . import charts, export, reports
+from . import ap, charts, export, reports, taxconfig
 from .accounts import ENTITY_LABELS
 from .ledger import PostingError
 
@@ -31,7 +31,11 @@ PACKAGE_FILES = {
         "Assets, liabilities, and equity as of year-end.",
     "05-accounts-receivable-aging.csv":
         "Open invoices at year-end, bucketed by how far past due.",
-    "06-tax-line-mapping.csv":
+    "06-accounts-payable-aging.csv":
+        "Open bills at year-end, bucketed by how far past due.",
+    "07-1099-vendor-report.csv":
+        "1099-eligible vendors and what they were paid, with TIN exceptions.",
+    "08-tax-line-mapping.csv":
         "Each account mapped to its return line; unmapped accounts flagged.",
 }
 
@@ -86,6 +90,18 @@ def preflight(conn, company, year):
                        "detail": "No imported transactions are waiting for "
                                  "review."})
 
+    threshold = taxconfig.form_1099_nec_threshold_cents(year)
+    report_1099 = ap.vendor_1099_report(conn, company["id"], year, threshold)
+    if report_1099["missing_tin_count"]:
+        checks.append({"name": "1099 vendor TINs", "status": "warning",
+                       "detail": f"{report_1099['missing_tin_count']} vendor(s) "
+                                 f"paid over the 1099 threshold are missing a "
+                                 f"TIN — collect a W-9 before filing."})
+    else:
+        checks.append({"name": "1099 vendor TINs", "status": "ok",
+                       "detail": "Every 1099 vendor over the threshold has a "
+                                 "TIN on file."})
+
     checks.append({"name": "Bank reconciliation", "status": "info",
                    "detail": "Statement reconciliation is not yet part of the "
                              "module. Confirm cash balances against bank "
@@ -135,12 +151,10 @@ def _readme(company, pf, generated):
         "NOT YET INCLUDED",
         "-" * 64,
         "The accounting module is being built in phases. This package covers",
-        "the general ledger and the reports derived from it. Still to come as",
-        "later phases ship: accounts payable and the 1099 vendor report, bank",
-        "and credit-card reconciliation reports, the depreciation schedule,",
-        "payroll summaries and payroll-tax liability, the sales-tax liability",
-        "summary, loan and owner-equity schedules, the statement of cash",
-        "flows, and PDF and Excel copies of each report.",
+        "the general ledger, accounts receivable and payable, the 1099 vendor",
+        "report, and the financial statements. Still to come: the fixed-asset",
+        "depreciation schedule, bank and credit-card reconciliation reports,",
+        "the statement of cash flows, and PDF and Excel copies of each report.",
         "",
     ]
     return "\n".join(lines)
@@ -168,7 +182,11 @@ def build_package(conn, company, year):
             export.balance_sheet_csv(conn, company, end),
         "05-accounts-receivable-aging.csv":
             export.ar_aging_csv(conn, company, end),
-        "06-tax-line-mapping.csv":
+        "06-accounts-payable-aging.csv":
+            export.ap_aging_csv(conn, company, end),
+        "07-1099-vendor-report.csv":
+            export.vendor_1099_csv(conn, company, pf["year"]),
+        "08-tax-line-mapping.csv":
             export.tax_line_mapping_csv(conn, company, end),
     }
 

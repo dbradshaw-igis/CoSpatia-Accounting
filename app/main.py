@@ -10,8 +10,8 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
 from . import accounts as acct
-from . import (accountant_export, ar, auth, banking, charts, db, export,
-               ledger, reports)
+from . import (accountant_export, ap, ar, auth, banking, charts, db, export,
+               ledger, reports, taxconfig)
 
 BASE = Path(__file__).resolve().parent
 
@@ -881,6 +881,221 @@ async def account_password(request: Request):
             return RedirectResponse(f"/account?error={exc}", status_code=303)
         return RedirectResponse("/account?saved=Password changed.",
                                 status_code=303)
+    finally:
+        conn.close()
+
+
+# --- vendors ---------------------------------------------------------------
+
+@app.get("/vendors", response_class=HTMLResponse)
+def vendors_page(request: Request, error: str = "", saved: str = ""):
+    conn = db.get_conn()
+    try:
+        company = _require_company(conn)
+        if company is None:
+            return RedirectResponse("/setup", status_code=303)
+        return render("vendors.html", request, _conn=conn,
+                      vendors=ap.list_vendors(conn, company["id"]),
+                      expense_accounts=ap.bill_line_accounts(
+                          conn, company["id"]),
+                      error=error, saved=saved)
+    finally:
+        conn.close()
+
+
+@app.post("/vendors")
+async def create_vendor(request: Request):
+    form = await request.form()
+    conn = db.get_conn()
+    try:
+        company = _require_company(conn)
+        if company is None:
+            return RedirectResponse("/setup", status_code=303)
+        default_account = form.get("default_expense_account_id") or None
+        try:
+            ap.create_vendor(
+                conn, company["id"], form.get("name", ""),
+                address=form.get("address", ""), tin=form.get("tin", ""),
+                is_1099=bool(form.get("is_1099")),
+                box_1099=form.get("box_1099", ""),
+                default_expense_account_id=default_account,
+                terms_days=form.get("terms_days") or 30)
+        except (ledger.PostingError, ValueError) as exc:
+            return RedirectResponse(f"/vendors?error={exc}", status_code=303)
+        return RedirectResponse("/vendors?saved=1", status_code=303)
+    finally:
+        conn.close()
+
+
+@app.get("/vendors/1099", response_class=HTMLResponse)
+def vendor_1099_page(request: Request, year: str = ""):
+    conn = db.get_conn()
+    try:
+        company = _require_company(conn)
+        if company is None:
+            return RedirectResponse("/setup", status_code=303)
+        chosen = int(year) if year.strip() else date.today().year
+        threshold = taxconfig.form_1099_nec_threshold_cents(chosen)
+        return render("vendor_1099.html", request, _conn=conn, year=chosen,
+                      report=ap.vendor_1099_report(
+                          conn, company["id"], chosen, threshold))
+    finally:
+        conn.close()
+
+
+# --- bills -----------------------------------------------------------------
+
+@app.get("/bills", response_class=HTMLResponse)
+def bills_page(request: Request):
+    conn = db.get_conn()
+    try:
+        company = _require_company(conn)
+        if company is None:
+            return RedirectResponse("/setup", status_code=303)
+        return render("bills.html", request, _conn=conn,
+                      bills=ap.list_bills(conn, company["id"]),
+                      today=date.today().isoformat())
+    finally:
+        conn.close()
+
+
+@app.get("/bills/new", response_class=HTMLResponse)
+def bill_new_page(request: Request, error: str = ""):
+    conn = db.get_conn()
+    try:
+        company = _require_company(conn)
+        if company is None:
+            return RedirectResponse("/setup", status_code=303)
+        return render("bill_new.html", request, _conn=conn,
+                      vendors=ap.list_vendors(conn, company["id"]),
+                      accounts=ap.bill_line_accounts(conn, company["id"]),
+                      today=date.today().isoformat(), rows=range(6),
+                      error=error)
+    finally:
+        conn.close()
+
+
+@app.post("/bills")
+async def create_bill(request: Request):
+    form = await request.form()
+    conn = db.get_conn()
+    try:
+        company = _require_company(conn)
+        if company is None:
+            return RedirectResponse("/setup", status_code=303)
+        bill_date = form.get("bill_date") or date.today().isoformat()
+        due_date = form.get("due_date") or ""
+        vendor_id = form.get("vendor_id")
+        if not vendor_id:
+            return RedirectResponse("/bills/new?error=Choose a vendor.",
+                                    status_code=303)
+        if not due_date:
+            vendor = ap.get_vendor(conn, int(vendor_id))
+            terms = vendor["terms_days"] if vendor else 30
+            due_date = (date.fromisoformat(bill_date)
+                        + timedelta(days=terms)).isoformat()
+        lines = []
+        for i in range(6):
+            account = form.get(f"account_{i}")
+            if not account:
+                continue
+            lines.append((form.get(f"description_{i}", ""), int(account),
+                          ledger.to_cents(form.get(f"amount_{i}"))))
+        try:
+            bill_id = ap.create_bill(
+                conn, company["id"], int(vendor_id), bill_date, due_date,
+                form.get("bill_number", ""), lines, memo=form.get("memo", ""))
+        except ledger.PostingError as exc:
+            return RedirectResponse(f"/bills/new?error={exc}", status_code=303)
+        return RedirectResponse(f"/bills/{bill_id}", status_code=303)
+    finally:
+        conn.close()
+
+
+@app.get("/bills/{bill_id}", response_class=HTMLResponse)
+def bill_view(request: Request, bill_id: int):
+    conn = db.get_conn()
+    try:
+        company = _require_company(conn)
+        if company is None:
+            return RedirectResponse("/setup", status_code=303)
+        detail = ap.get_bill(conn, bill_id)
+        if detail is None:
+            return RedirectResponse("/bills", status_code=303)
+        return render("bill_view.html", request, _conn=conn, d=detail)
+    finally:
+        conn.close()
+
+
+@app.get("/ap-aging", response_class=HTMLResponse)
+def ap_aging_page(request: Request, as_of: str = ""):
+    as_of = as_of or date.today().isoformat()
+    conn = db.get_conn()
+    try:
+        company = _require_company(conn)
+        if company is None:
+            return RedirectResponse("/setup", status_code=303)
+        return render("ap_aging.html", request, _conn=conn, as_of=as_of,
+                      aging=ap.ap_aging(conn, company["id"], as_of))
+    finally:
+        conn.close()
+
+
+# --- bill payments ---------------------------------------------------------
+
+@app.get("/bill-payments/new", response_class=HTMLResponse)
+def bill_payment_new_page(request: Request, vendor_id: str = "",
+                          error: str = ""):
+    conn = db.get_conn()
+    try:
+        company = _require_company(conn)
+        if company is None:
+            return RedirectResponse("/setup", status_code=303)
+        vendor = bills = None
+        if vendor_id:
+            vendor = ap.get_vendor(conn, int(vendor_id))
+            bills = ap.open_bills(conn, int(vendor_id))
+        return render("bill_payment_new.html", request, _conn=conn,
+                      vendors=ap.list_vendors(conn, company["id"]),
+                      sources=ap.payment_accounts(conn, company["id"]),
+                      vendor=vendor, open_bills=bills,
+                      today=date.today().isoformat(), error=error)
+    finally:
+        conn.close()
+
+
+@app.post("/bill-payments")
+async def create_bill_payment(request: Request):
+    form = await request.form()
+    conn = db.get_conn()
+    try:
+        company = _require_company(conn)
+        if company is None:
+            return RedirectResponse("/setup", status_code=303)
+        vendor_id = form.get("vendor_id")
+        paid_from = form.get("paid_from_account_id")
+        if not vendor_id or not paid_from:
+            return RedirectResponse(
+                "/bill-payments/new?error=Choose a vendor and the account "
+                "the payment came from.", status_code=303)
+        applications = []
+        for bill in ap.open_bills(conn, int(vendor_id)):
+            value = form.get(f"apply_{bill['bill']['id']}")
+            applications.append((bill["bill"]["id"],
+                                 ledger.to_cents(value)))
+        try:
+            ap.pay_bills(
+                conn, company["id"], int(vendor_id),
+                form.get("payment_date") or date.today().isoformat(),
+                int(paid_from), form.get("payment_method", "check"),
+                applications, reference=form.get("reference", ""),
+                memo=form.get("memo", ""))
+        except ledger.PostingError as exc:
+            return RedirectResponse(
+                f"/bill-payments/new?vendor_id={vendor_id}&error={exc}",
+                status_code=303)
+        return RedirectResponse(f"/bill-payments/new?vendor_id={vendor_id}"
+                                "&error=Payment recorded.", status_code=303)
     finally:
         conn.close()
 
