@@ -6,41 +6,134 @@
   <title>{% block title %}Accounting{% endblock %} — CoSpatia&#174;</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-  <nav>
-    <span class="brand">CoSpatia&#174;<span class="sub">Accounting</span></span>
-    {% if company and (current_user or not auth_enabled) %}
-    <a href="/">Dashboard</a>
-    <a href="/invoices">Invoices</a>
-    <a href="/customers">Customers</a>
-    <a href="/payments/new">Receive Payment</a>
-    <a href="/bills">Bills</a>
-    <a href="/vendors">Vendors</a>
-    <a href="/bill-payments/new">Pay Bills</a>
-    <a href="/banking">Bank Import</a>
-    <a href="/journal">Journal Entry</a>
-    <a href="/accounts">Chart of Accounts</a>
-    <a href="/trial-balance">Trial Balance</a>
-    <a href="/pnl">Profit &amp; Loss</a>
-    <a href="/balance-sheet">Balance Sheet</a>
-    <a href="/accountant-export">Export for Accountant</a>
-    {% if current_role == 'admin' %}<a href="/users">Users</a>{% endif %}
+<body class="igl igl-rtp-standard{% if not company %} igl-sidebar-collapsed{% endif %}">
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<header class="igl-topbar" role="banner">
+  <div class="igl-brand">
+    <a href="/" class="igl-brand-link" title="CoSpatia&#174; Accounting">
+      <img class="igl-brand-igis-logo" src="/static/interactivegis-logo.png"
+           alt="InteractiveGIS, Inc.">
+    </a>
+    <button class="igl-hamburger" type="button" aria-label="Toggle navigation"
+            onclick="document.body.classList.toggle('igl-sidebar-collapsed')">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="igl-brand-divider"></div>
+    <div class="igl-brand-text">
+      <div class="igl-brand-primary">CoSpatia&#174;</div>
+      <div class="igl-brand-tagline">Accounting Module</div>
+    </div>
+  </div>
+  <div class="igl-topbar-right">
+    {% if company %}
+    <span class="igl-topbar-company">{{ company.legal_name }}</span>
     {% endif %}
-    <span class="nav-right">
-      {% if company and current_user %}
-      <span class="company">{{ company.legal_name }}</span>
-      {% endif %}
-      {% if current_user %}
-      <a href="/account" class="nav-user">{{ current_user }}</a>
-      <form method="post" action="/logout" class="logout-form">
-        <button type="submit" class="logout-button">Log Out</button>
-      </form>
-      {% endif %}
-    </span>
+    {% if current_user %}
+    <a href="/account" class="igl-topbar-user" title="My Account">{{ current_user }}</a>
+    <form method="post" action="/logout" class="igl-logout-form">
+      <button type="submit" class="igl-logout-btn">Log Out</button>
+    </form>
+    {% endif %}
+  </div>
+</header>
+
+<div class="igl-layout">
+  <nav class="igl-sidebar" aria-label="Primary navigation">
+    <div class="igl-sidebar-body">
+    {% if company and (current_user or not auth_enabled) %}
+    {% set p = request.url.path %}
+
+    <a class="igl-nav-item{{ ' active' if p == '/' }}" href="/">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+      <span class="igl-nav-text">Dashboard</span>
+    </a>
+
+    <div class="igl-nav-group-label">Sales</div>
+    <a class="igl-nav-item{{ ' active' if p == '/invoices' or p.startswith('/invoices/') }}" href="/invoices">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg></span>
+      <span class="igl-nav-text">Invoices</span>
+    </a>
+    <a class="igl-nav-item{{ ' active' if p == '/customers' }}" href="/customers">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      <span class="igl-nav-text">Customers</span>
+    </a>
+    <a class="igl-nav-item{{ ' active' if p.startswith('/payments') }}" href="/payments/new">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><polyline points="19 12 12 19 5 12"/></svg></span>
+      <span class="igl-nav-text">Receive Payment</span>
+    </a>
+
+    <div class="igl-nav-group-label">Purchases</div>
+    <a class="igl-nav-item{{ ' active' if p == '/bills' or p.startswith('/bills/') }}" href="/bills">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+      <span class="igl-nav-text">Bills</span>
+    </a>
+    <a class="igl-nav-item{{ ' active' if p.startswith('/vendors') }}" href="/vendors">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+      <span class="igl-nav-text">Vendors</span>
+    </a>
+    <a class="igl-nav-item{{ ' active' if p.startswith('/bill-payments') }}" href="/bill-payments/new">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><polyline points="5 12 12 5 19 12"/></svg></span>
+      <span class="igl-nav-text">Pay Bills</span>
+    </a>
+
+    <div class="igl-nav-group-label">Banking &amp; Books</div>
+    <a class="igl-nav-item{{ ' active' if p.startswith('/banking') }}" href="/banking">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+      <span class="igl-nav-text">Bank Import</span>
+    </a>
+    <a class="igl-nav-item{{ ' active' if p.startswith('/journal') }}" href="/journal">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+      <span class="igl-nav-text">Journal Entry</span>
+    </a>
+    <a class="igl-nav-item{{ ' active' if p.startswith('/accounts') or p.startswith('/account/') }}" href="/accounts">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
+      <span class="igl-nav-text">Chart of Accounts</span>
+    </a>
+
+    <div class="igl-nav-group-label">Reports</div>
+    <a class="igl-nav-item{{ ' active' if p.startswith('/trial-balance') }}" href="/trial-balance">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="21"/><path d="M5 7h14"/><path d="M3 11l2-4 2 4a2 2 0 0 1-4 0z"/><path d="M17 11l2-4 2 4a2 2 0 0 1-4 0z"/></svg></span>
+      <span class="igl-nav-text">Trial Balance</span>
+    </a>
+    <a class="igl-nav-item{{ ' active' if p.startswith('/pnl') }}" href="/pnl">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span>
+      <span class="igl-nav-text">Profit &amp; Loss</span>
+    </a>
+    <a class="igl-nav-item{{ ' active' if p.startswith('/balance-sheet') }}" href="/balance-sheet">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6a2 2 0 0 1 2 2v0H7v0a2 2 0 0 1 2-2z"/><rect x="4" y="4" width="16" height="18" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="13" y2="18"/></svg></span>
+      <span class="igl-nav-text">Balance Sheet</span>
+    </a>
+    <a class="igl-nav-item{{ ' active' if p.startswith('/ap-aging') }}" href="/ap-aging">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+      <span class="igl-nav-text">A/P Aging</span>
+    </a>
+    <a class="igl-nav-item{{ ' active' if p.startswith('/accountant-export') }}" href="/accountant-export">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>
+      <span class="igl-nav-text">Export for Accountant</span>
+    </a>
+
+    {% if current_role == 'admin' %}
+    <div class="igl-nav-group-label">Administration</div>
+    <a class="igl-nav-item{{ ' active' if p.startswith('/users') }}" href="/users">
+      <span class="igl-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><circle cx="19" cy="11" r="2"/></svg></span>
+      <span class="igl-nav-text">Users</span>
+    </a>
+    {% endif %}
+    {% endif %}
+    </div>
   </nav>
-  <main>
+
+  <main class="igl-main" id="main-content" tabindex="-1">
     {% block content %}{% endblock %}
   </main>
-  <footer>InteractiveGIS, Inc. — CoSpatia&#174; Accounting Module</footer>
+</div>
+
+<footer class="igl-footer">
+  <div class="igl-footer-copy">&copy; 2026 InteractiveGIS, Inc.</div>
+  <div class="igl-footer-product">CoSpatia&#174; &middot; Accounting Module</div>
+</footer>
+
 </body>
 </html>
