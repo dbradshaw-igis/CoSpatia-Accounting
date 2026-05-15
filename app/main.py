@@ -20,6 +20,13 @@ BASE = Path(__file__).resolve().parent
 # in place behind it, nothing was removed.
 AUTH_ENABLED = False
 
+# Embedded mode — when the module runs inside the CoSpatia shell rather than
+# standalone. CoSpatia then provides the top bar and sidebar, so the module
+# drops its own chrome and renders only the page content. Set COSPATIA_EMBEDDED=1
+# in the environment for the integrated deployment; left unset, the module runs
+# standalone with full chrome for development and demos.
+EMBEDDED = os.environ.get("COSPATIA_EMBEDDED", "") == "1"
+
 app = FastAPI(title="CoSpatia Accounting Module")
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 
@@ -28,6 +35,7 @@ templates.env.filters["money"] = ledger.fmt
 templates.env.globals["type_labels"] = acct.TYPE_LABELS
 templates.env.globals["type_order"] = acct.TYPE_ORDER
 templates.env.globals["auth_enabled"] = AUTH_ENABLED
+templates.env.globals["embedded"] = EMBEDDED
 
 
 @app.on_event("startup")

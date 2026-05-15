@@ -6,10 +6,11 @@
   <title>{% block title %}Accounting{% endblock %} — CoSpatia&#174;</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="igl igl-rtp-standard{% if not company %} igl-sidebar-collapsed{% endif %}">
+<body class="igl igl-rtp-standard{% if embedded %} igl-embedded{% elif not company %} igl-sidebar-collapsed{% endif %}">
 
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
+{% if not embedded %}
 <header class="igl-topbar" role="banner">
   <div class="igl-brand">
     <a href="/" class="igl-brand-link" title="CoSpatia&#174; Accounting">
@@ -38,8 +39,10 @@
     {% endif %}
   </div>
 </header>
+{% endif %}
 
 <div class="igl-layout">
+  {% if not embedded %}
   <nav class="igl-sidebar" aria-label="Primary navigation">
     <div class="igl-sidebar-body">
     {% if company and (current_user or not auth_enabled) %}
@@ -124,16 +127,19 @@
     {% endif %}
     </div>
   </nav>
+  {% endif %}
 
   <main class="igl-main" id="main-content" tabindex="-1">
     {% block content %}{% endblock %}
   </main>
 </div>
 
+{% if not embedded %}
 <footer class="igl-footer">
   <div class="igl-footer-copy">&copy; 2026 InteractiveGIS, Inc.</div>
   <div class="igl-footer-product">CoSpatia&#174; &middot; Accounting Module</div>
 </footer>
+{% endif %}
 
 <button type="button" id="app-totop" class="app-totop"
         title="Back to top" aria-label="Back to top">

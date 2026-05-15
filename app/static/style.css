@@ -550,6 +550,13 @@ ul.checks { list-style: none; padding: 0; margin: 0 0 18px; }
 .app-totop:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
 .app-totop svg { width: 20px; height: 20px; }
 
+/* ===== Embedded mode — running inside the CoSpatia shell =============
+   CoSpatia draws the top bar and sidebar, so the module renders only its
+   page content: one column, no topbar/footer height to subtract. */
+body.igl-embedded .igl-layout { grid-template-columns: 1fr; min-height: 0; }
+body.igl-embedded .igl-main { padding: 20px 24px; }
+body.igl-embedded .app-totop { bottom: 24px; }
+
 /* ===== Small screens ================================================= */
 @media (max-width: 820px) {
   .igl-layout { grid-template-columns: 0 1fr; }
