@@ -135,5 +135,44 @@
   <div class="igl-footer-product">CoSpatia&#174; &middot; Accounting Module</div>
 </footer>
 
+<button type="button" id="app-totop" class="app-totop"
+        title="Back to top" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <polyline points="18 15 12 9 6 15"/>
+  </svg>
+</button>
+
+<script>
+  // Wrap each table in a horizontally-scrollable container so content
+  // wider than the page — long emails, addresses — scrolls instead of
+  // being clipped off the edge.
+  document.querySelectorAll("table").forEach(function (table) {
+    if (table.classList.contains("compact")) return;
+    var parent = table.parentNode;
+    if (parent && parent.classList.contains("table-scroll")) return;
+    var wrap = document.createElement("div");
+    wrap.className = "table-scroll";
+    parent.insertBefore(wrap, table);
+    wrap.appendChild(table);
+  });
+
+  // Back-to-top button — appears once the page is scrolled well down,
+  // smooth-scrolls to the top on click.
+  (function () {
+    var btn = document.getElementById("app-totop");
+    if (!btn) return;
+    function onScroll() {
+      btn.classList.toggle("is-visible",
+        window.scrollY > window.innerHeight * 0.6);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    btn.addEventListener("click", function () {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  })();
+</script>
+
 </body>
 </html>
