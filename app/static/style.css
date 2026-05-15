@@ -161,6 +161,34 @@ body.igl-sidebar-collapsed .igl-sidebar { transform: translateX(-100%); }
   letter-spacing: 0.7px;
   color: #8a7e60;
 }
+
+/* Sidebar suitcase — the collapsible "Accounting" group that holds the
+   whole module nav, the way CoSpatia's "Customer Mgmt" suitcase works. */
+details.igl-suitcase { margin: 0; }
+.igl-suitcase-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 4px 12px 6px;
+  padding: 8px 12px 8px 7px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--blue-dark);
+  list-style: none;
+}
+.igl-suitcase-head::-webkit-details-marker { display: none; }
+.igl-suitcase-head:hover { background: rgba(31, 78, 121, 0.08); }
+.igl-suitcase-chev {
+  width: 16px;
+  height: 16px;
+  margin-left: auto;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+details.igl-suitcase:not([open]) .igl-suitcase-chev { transform: rotate(-90deg); }
+.igl-suitcase-body { padding-bottom: 4px; }
 .igl-nav-item {
   display: flex;
   align-items: center;
