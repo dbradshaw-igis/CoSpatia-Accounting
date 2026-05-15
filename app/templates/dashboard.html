@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>{{ company.legal_name }}</h1>
+<p class="lead">{{ entity_labels[company.entity_type] }} &middot;
+{{ company.accounting_basis | capitalize }} basis
+{% if company.ein %}&middot; EIN {{ company.ein }}{% endif %}</p>
+
+<div class="cards">
+  <div class="card">
+    <span class="card-label">Total Assets</span>
+    <span class="card-value">{{ bs.total_assets | money }}</span>
+    <span class="card-sub">as of {{ as_of }}</span>
+  </div>
+  <div class="card">
+    <span class="card-label">Net Income</span>
+    <span class="card-value">{{ pnl.net_income | money }}</span>
+    <span class="card-sub">fiscal year to date</span>
+  </div>
+  <div class="card">
+    <span class="card-label">Trial Balance</span>
+    <span class="card-value {{ 'ok' if tb.balanced else 'error' }}">
+      {{ "In balance" if tb.balanced else "Out of balance" }}</span>
+    <span class="card-sub">{{ tb.rows | length }} accounts with activity</span>
+  </div>
+  <div class="card">
+    <span class="card-label">Balance Sheet</span>
+    <span class="card-value {{ 'ok' if bs.balanced else 'error' }}">
+      {{ "Balances" if bs.balanced else "Does not balance" }}</span>
+    <span class="card-sub">assets = liabilities + equity</span>
+  </div>
+</div>
+
+<h2>Next Steps</h2>
+<p>Post transactions on the <a href="/journal">Journal Entry</a> page. The
+<a href="/trial-balance">Trial Balance</a>, <a href="/pnl">Profit &amp; Loss</a>,
+and <a href="/balance-sheet">Balance Sheet</a> update from the ledger as you go.
+Download the Trial Balance CSV from the Trial Balance page — that is the file an
+accountant imports into tax software.</p>
+
+{% if company.locked_through %}
+<p class="note">Books are locked through {{ company.locked_through }}.
+Postings dated on or before that date are rejected.</p>
+{% endif %}
+{% endblock %}

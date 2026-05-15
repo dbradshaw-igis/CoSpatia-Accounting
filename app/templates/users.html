@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<h1>Users</h1>
+<p class="lead">Everyone who works on the books has their own account — no
+shared logins. An administrator can add accounts and grant the administrator
+role.</p>
+
+{% if saved %}<p class="ok">User added.</p>{% endif %}
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<table>
+  <thead>
+    <tr><th>Username</th><th>Display Name</th><th>Role</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.username }}</td>
+      <td class="muted">{{ u.display_name or "—" }}</td>
+      <td>{{ "Administrator" if u.role == "admin" else "Standard" }}</td>
+      <td>{{ "Active" if u.active else "Disabled" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>Add a User</h2>
+<form method="post" action="/users" class="stack-form">
+  <label>Username
+    <input type="text" name="username" required>
+  </label>
+  <label>Display Name
+    <input type="text" name="display_name">
+  </label>
+  <label>Role
+    <select name="role">
+      <option value="standard">Standard</option>
+      <option value="admin">Administrator</option>
+    </select>
+  </label>
+  <label>Password
+    <input type="password" name="password" autocomplete="new-password" required>
+  </label>
+  <label>Confirm Password
+    <input type="password" name="confirm" autocomplete="new-password" required>
+  </label>
+  <button type="submit">Add User</button>
+</form>
+{% endblock %}

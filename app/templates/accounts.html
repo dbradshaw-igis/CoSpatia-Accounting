@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Chart of Accounts{% endblock %}
+{% block content %}
+<h1>Chart of Accounts</h1>
+<p class="lead">The backbone of the books. Every account has a type that decides
+which financial statement it lands on, and a tax line that tells the accountant
+where it goes on the return.</p>
+
+{% for type in type_order %}
+  {% if grouped[type] %}
+  <h2>{{ type_labels[type] }}</h2>
+  <table>
+    <thead>
+      <tr><th>Number</th><th>Account</th><th>Subtype</th><th>Tax Line</th></tr>
+    </thead>
+    <tbody>
+      {% for a in grouped[type] %}
+      <tr>
+        <td class="num">{{ a.account_number }}</td>
+        <td>
+          <a href="/account/{{ a.id }}">{{ a.name }}</a>
+          {% if a.reconcilable %}<span class="tag">Reconcilable</span>{% endif %}
+        </td>
+        <td class="muted">{{ a.subtype or "—" }}</td>
+        <td class="{{ 'muted' if a.tax_line else 'unmapped' }}">
+          {{ a.tax_line or "Unmapped" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+{% endfor %}
+
+<p class="note">Income and expense accounts are pre-mapped to this entity's
+return. Balance-sheet accounts ship unmapped — Schedule L assignment depends on
+the entity and size thresholds, so the accountant sets those. Unmapped accounts
+are flagged on the year-end export, not lost.</p>
+{% endblock %}

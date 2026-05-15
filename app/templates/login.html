@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Sign In{% endblock %}
+{% block content %}
+<h1>Sign In</h1>
+<p class="lead">Enter your username and password to reach the books.</p>
+
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<form method="post" action="/login" class="stack-form">
+  <label>Username
+    <input type="text" name="username" autocomplete="username" required autofocus>
+  </label>
+  <label>Password
+    <input type="password" name="password" autocomplete="current-password" required>
+  </label>
+  <button type="submit">Sign In</button>
+</form>
+{% endblock %}

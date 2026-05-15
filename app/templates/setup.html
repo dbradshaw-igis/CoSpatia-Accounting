@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Company Setup{% endblock %}
+{% block content %}
+<h1>Set Up the Company</h1>
+<p class="lead">Entity type is the master switch. It loads the right chart of
+accounts and decides which return line each account maps to, so set it
+correctly before posting anything.</p>
+
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<form method="post" action="/setup" class="stack-form">
+  <label>Legal Name
+    <input type="text" name="legal_name" required
+           placeholder="As filed with the state">
+  </label>
+  <label>Doing Business As (optional)
+    <input type="text" name="dba">
+  </label>
+  <label>EIN (optional)
+    <input type="text" name="ein" placeholder="00-0000000">
+  </label>
+  <label>Entity Type
+    <select name="entity_type" required>
+      {% for key, label in entity_labels.items() %}
+      <option value="{{ key }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Accounting Basis
+    <select name="accounting_basis">
+      <option value="accrual">Accrual</option>
+      <option value="cash">Cash</option>
+    </select>
+  </label>
+  <label>Tax Year
+    <select name="tax_year_type">
+      <option value="calendar">Calendar Year</option>
+      <option value="fiscal">Fiscal Year</option>
+    </select>
+  </label>
+  <label>Fiscal Year-End Month (if fiscal)
+    <input type="number" name="fiscal_year_end_month" min="1" max="12" value="12">
+  </label>
+  <label>State of Operation
+    <input type="text" name="state" placeholder="e.g. VA">
+  </label>
+  <button type="submit">Create Company &amp; Load Chart of Accounts</button>
+</form>
+{% endblock %}

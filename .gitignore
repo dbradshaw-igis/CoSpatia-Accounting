@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+accounting.db
+.pytest_cache/
+.session_secret

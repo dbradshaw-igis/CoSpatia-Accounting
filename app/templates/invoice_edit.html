@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Edit Invoice {{ d.invoice.invoice_number }}{% endblock %}
+{% block content %}
+<h1>Edit Invoice {{ d.invoice.invoice_number }}</h1>
+<p class="lead">Saving re-posts this invoice to the ledger: the original journal
+entry is voided and a corrected one takes its place, so the audit trail keeps
+the original. Editing is only possible while no payment has been applied.</p>
+
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<form method="post" action="/invoices/{{ d.invoice.id }}/edit" class="entry-form">
+  <div class="header-fields">
+    <label>Customer
+      <select name="customer_id" required>
+        {% for c in customers %}
+        <option value="{{ c.id }}"
+          {{ 'selected' if c.id == d.invoice.customer_id }}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Invoice Number
+      <input type="text" value="{{ d.invoice.invoice_number }}" readonly>
+    </label>
+    <label>Invoice Date
+      <input type="date" name="invoice_date"
+             value="{{ d.invoice.invoice_date }}" required>
+    </label>
+    <label>Due Date
+      <input type="date" name="due_date" value="{{ d.invoice.due_date }}">
+    </label>
+    <label class="grow">Memo
+      <input type="text" name="memo" value="{{ d.invoice.memo or '' }}">
+    </label>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Description</th><th>Income Account</th><th class="num">Amount</th></tr>
+    </thead>
+    <tbody>
+      {% for i in rows %}
+      {% set line = d.lines[i] if i < d.lines | length else None %}
+      <tr>
+        <td><input type="text" name="description_{{ i }}"
+                   value="{{ line.description if line else '' }}"></td>
+        <td>
+          <select name="account_{{ i }}">
+            <option value="">—</option>
+            {% for a in income %}
+            <option value="{{ a.id }}"
+              {{ 'selected' if line and a.id == line.income_account_id }}>
+              {{ a.account_number }} · {{ a.name }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td><input type="text" name="amount_{{ i }}" class="num"
+                   inputmode="decimal"
+                   value="{{ line.amount_cents | money if line else '' }}"></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <button type="submit">Save &amp; Re-Post Invoice</button>
+  <a class="button-link" href="/invoices/{{ d.invoice.id }}">Cancel</a>
+</form>
+{% endblock %}

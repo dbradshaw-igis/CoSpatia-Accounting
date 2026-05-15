@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}New Invoice{% endblock %}
+{% block content %}
+<h1>New Invoice</h1>
+<p class="lead">Each line credits an income account; the total debits Accounts
+Receivable. Leave the due date blank to use the customer's payment terms. The
+invoice number is assigned automatically as year-month plus the next number in
+that month.</p>
+
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+{% if not customers %}
+<p class="note">Add a customer first on the
+<a href="/customers">Customers</a> page.</p>
+{% else %}
+<form method="post" action="/invoices" class="entry-form">
+  <div class="header-fields">
+    <label>Customer
+      <select name="customer_id" required>
+        <option value="">—</option>
+        {% for c in customers %}
+        <option value="{{ c.id }}">{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Invoice Number
+      <input type="text" value="{{ number }}" readonly>
+    </label>
+    <label>Invoice Date
+      <input type="date" name="invoice_date" value="{{ today }}" required>
+    </label>
+    <label>Due Date
+      <input type="date" name="due_date">
+    </label>
+    <label class="grow">Memo
+      <input type="text" name="memo">
+    </label>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Description</th><th>Income Account</th><th class="num">Amount</th></tr>
+    </thead>
+    <tbody>
+      {% for i in rows %}
+      <tr>
+        <td><input type="text" name="description_{{ i }}"></td>
+        <td>
+          <select name="account_{{ i }}">
+            <option value="">—</option>
+            {% for a in income %}
+            <option value="{{ a.id }}">{{ a.account_number }} · {{ a.name }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td><input type="text" name="amount_{{ i }}" class="num" inputmode="decimal"></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <button type="submit">Create &amp; Post Invoice</button>
+</form>
+{% endif %}
+{% endblock %}

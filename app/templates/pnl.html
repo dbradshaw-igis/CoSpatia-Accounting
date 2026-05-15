@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Profit & Loss{% endblock %}
+{% block content %}
+<h1>Profit &amp; Loss</h1>
+<p class="lead">Income and expense for the period below, with gross profit,
+operating income, and net income. These figures map to the income and deduction
+lines of the return.</p>
+
+<form method="get" action="/pnl" class="inline-form">
+  <label>From <input type="date" name="start" value="{{ pnl.start }}"></label>
+  <label>To <input type="date" name="end" value="{{ pnl.end }}"></label>
+  <button type="submit">Show</button>
+</form>
+
+<table class="statement">
+  <tbody>
+    <tr class="section"><td colspan="2">Income</td></tr>
+    {% for r in pnl.income %}
+    <tr><td>{{ r.account_number }} · {{ r.name }}</td>
+        <td class="num">{{ r.amount | money }}</td></tr>
+    {% endfor %}
+    <tr class="subtotal"><td>Total Income</td>
+        <td class="num">{{ pnl.total_income | money }}</td></tr>
+
+    {% if pnl.cogs %}
+    <tr class="section"><td colspan="2">Cost of Goods Sold</td></tr>
+    {% for r in pnl.cogs %}
+    <tr><td>{{ r.account_number }} · {{ r.name }}</td>
+        <td class="num">{{ r.amount | money }}</td></tr>
+    {% endfor %}
+    <tr class="subtotal"><td>Total Cost of Goods Sold</td>
+        <td class="num">{{ pnl.total_cogs | money }}</td></tr>
+    {% endif %}
+
+    <tr class="total-line"><td>Gross Profit</td>
+        <td class="num">{{ pnl.gross_profit | money }}</td></tr>
+
+    <tr class="section"><td colspan="2">Expenses</td></tr>
+    {% for r in pnl.expense %}
+    <tr><td>{{ r.account_number }} · {{ r.name }}</td>
+        <td class="num">{{ r.amount | money }}</td></tr>
+    {% endfor %}
+    <tr class="subtotal"><td>Total Expenses</td>
+        <td class="num">{{ pnl.total_expense | money }}</td></tr>
+
+    <tr class="total-line"><td>Operating Income</td>
+        <td class="num">{{ pnl.operating_income | money }}</td></tr>
+
+    {% if pnl.other_income or pnl.other_expense %}
+    <tr class="section"><td colspan="2">Other Income &amp; Expense</td></tr>
+    {% for r in pnl.other_income %}
+    <tr><td>{{ r.account_number }} · {{ r.name }}</td>
+        <td class="num">{{ r.amount | money }}</td></tr>
+    {% endfor %}
+    {% for r in pnl.other_expense %}
+    <tr><td>{{ r.account_number }} · {{ r.name }} (expense)</td>
+        <td class="num">({{ r.amount | money }})</td></tr>
+    {% endfor %}
+    {% endif %}
+
+    <tr class="grand-total"><td>Net Income</td>
+        <td class="num">{{ pnl.net_income | money }}</td></tr>
+  </tbody>
+</table>
+{% endblock %}

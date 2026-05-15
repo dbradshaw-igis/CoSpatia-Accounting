@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Invoice {{ d.invoice.invoice_number }}{% endblock %}
+{% block content %}
+<h1>Invoice {{ d.invoice.invoice_number }}</h1>
+<p class="lead">
+  {{ d.customer.name }} &middot; dated {{ d.invoice.invoice_date }} &middot;
+  due {{ d.invoice.due_date }} &middot;
+  <span class="status status-{{ d.invoice.status }}">{{ d.invoice.status }}</span>
+</p>
+
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<table>
+  <thead>
+    <tr><th>Description</th><th>Income Account</th><th class="num">Amount</th></tr>
+  </thead>
+  <tbody>
+    {% for line in d.lines %}
+    <tr>
+      <td>{{ line.description or "—" }}</td>
+      <td class="muted">{{ line.account_number }} · {{ line.account_name }}</td>
+      <td class="num">{{ line.amount_cents | money }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr><td colspan="2">Invoice Total</td>
+        <td class="num">{{ d.total | money }}</td></tr>
+    <tr><td colspan="2">Paid</td>
+        <td class="num">{{ d.paid | money }}</td></tr>
+    <tr><td colspan="2">Balance Due</td>
+        <td class="num">{{ d.balance | money }}</td></tr>
+  </tfoot>
+</table>
+
+{% if d.invoice.memo %}<p class="muted">{{ d.invoice.memo }}</p>{% endif %}
+
+<p>
+  {% if editable %}
+  <a class="button-link" href="/invoices/{{ d.invoice.id }}/edit">Edit Invoice</a>
+  {% endif %}
+  {% if d.balance > 0 %}
+  <a class="button-link" href="/payments/new?customer_id={{ d.customer.id }}">Receive Payment</a>
+  {% endif %}
+  <a class="button-link" href="/invoices">Back to Invoices</a>
+</p>
+
+{% if not editable and d.invoice.status != 'void' %}
+<p class="muted">This invoice has a payment applied, so it can no longer be
+edited — that keeps the payment from pointing at changed figures.</p>
+{% endif %}
+{% endblock %}

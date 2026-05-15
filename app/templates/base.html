@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Accounting{% endblock %} — CoSpatia&#174;</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav>
+    <span class="brand">CoSpatia&#174;<span class="sub">Accounting</span></span>
+    {% if company and (current_user or not auth_enabled) %}
+    <a href="/">Dashboard</a>
+    <a href="/invoices">Invoices</a>
+    <a href="/customers">Customers</a>
+    <a href="/payments/new">Receive Payment</a>
+    <a href="/banking">Bank Import</a>
+    <a href="/journal">Journal Entry</a>
+    <a href="/accounts">Chart of Accounts</a>
+    <a href="/trial-balance">Trial Balance</a>
+    <a href="/pnl">Profit &amp; Loss</a>
+    <a href="/balance-sheet">Balance Sheet</a>
+    <a href="/accountant-export">Export for Accountant</a>
+    {% if current_role == 'admin' %}<a href="/users">Users</a>{% endif %}
+    {% endif %}
+    <span class="nav-right">
+      {% if company and current_user %}
+      <span class="company">{{ company.legal_name }}</span>
+      {% endif %}
+      {% if current_user %}
+      <a href="/account" class="nav-user">{{ current_user }}</a>
+      <form method="post" action="/logout" class="logout-form">
+        <button type="submit" class="logout-button">Log Out</button>
+      </form>
+      {% endif %}
+    </span>
+  </nav>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer>InteractiveGIS, Inc. — CoSpatia&#174; Accounting Module</footer>
+</body>
+</html>

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Bank Import{% endblock %}
+{% block content %}
+<h1>Bank Import</h1>
+<p class="lead">Import deposits and checks from a bank download file. An imported
+row is not posted until you assign the account the other side belongs to — then
+it posts a balanced journal entry.</p>
+
+{% if note %}<p class="ok">{{ note }}</p>{% endif %}
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+{% if not banks %}
+<p class="note">This company's chart has no bank account. Add one on the
+Chart of Accounts before importing.</p>
+{% else %}
+<h2>Upload a Bank File</h2>
+<form method="post" action="/banking/upload" enctype="multipart/form-data"
+      class="inline-form">
+  <label>CSV File <input type="file" name="file" accept=".csv,text/csv" required></label>
+  <button type="submit">Upload</button>
+</form>
+<p class="muted">A CSV downloaded from online banking. The next screen confirms
+which columns hold the date, description, and amount.</p>
+{% endif %}
+
+<h2>To Review {% if unreviewed %}<span class="tag">{{ unreviewed | length }}</span>{% endif %}</h2>
+{% if unreviewed %}
+<table>
+  <thead>
+    <tr>
+      <th>Date</th><th>Description</th><th>Bank Account</th>
+      <th class="num">Amount</th><th>Post To</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in unreviewed %}
+    <tr>
+      <td>{{ t.txn_date }}</td>
+      <td>{{ t.description or "—" }}</td>
+      <td class="muted">{{ t.bank_account_name }}</td>
+      <td class="num">
+        {% if t.amount_cents >= 0 %}
+          <span class="tag">Deposit</span> {{ t.amount_cents | money }}
+        {% else %}
+          <span class="tag">Check</span> {{ (-t.amount_cents) | money }}
+        {% endif %}
+      </td>
+      <td>
+        <form method="post" action="/banking/txn/{{ t.id }}/post"
+              class="row-form" id="post-{{ t.id }}">
+          <select name="offset_account_id" required>
+            <option value="">— account —</option>
+            {% for a in all_accounts %}
+            <option value="{{ a.id }}">{{ a.account_number }} · {{ a.name }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </td>
+      <td class="actions">
+        <button type="submit" form="post-{{ t.id }}">Post</button>
+        <form method="post" action="/banking/txn/{{ t.id }}/ignore" class="row-form">
+          <button type="submit" class="link-button">Already recorded</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">Nothing waiting for review.</p>
+{% endif %}
+
+{% if posted %}
+<h2>Recently Posted</h2>
+<table>
+  <thead>
+    <tr><th>Date</th><th>Description</th><th>Bank Account</th><th class="num">Amount</th></tr>
+  </thead>
+  <tbody>
+    {% for t in posted %}
+    <tr>
+      <td>{{ t.txn_date }}</td>
+      <td>{{ t.description or "—" }}</td>
+      <td class="muted">{{ t.bank_account_name }}</td>
+      <td class="num">{{ t.amount_cents | money }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

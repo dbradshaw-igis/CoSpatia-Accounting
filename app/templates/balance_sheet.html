@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Balance Sheet{% endblock %}
+{% block content %}
+<h1>Balance Sheet</h1>
+<p class="lead">Assets, liabilities, and equity as of the date below. It must
+balance: total assets equal total liabilities plus equity. Net income not yet
+closed to retained earnings is carried in the equity section.</p>
+
+<form method="get" action="/balance-sheet" class="inline-form">
+  <label>As of <input type="date" name="as_of" value="{{ as_of }}"></label>
+  <button type="submit">Show</button>
+</form>
+
+<table class="statement">
+  <tbody>
+    <tr class="section"><td colspan="2">Assets</td></tr>
+    {% for r in bs.assets %}
+    <tr><td>{{ r.account_number }} · {{ r.name }}</td>
+        <td class="num">{{ r.amount | money }}</td></tr>
+    {% else %}
+    <tr><td class="muted">No asset balances</td><td></td></tr>
+    {% endfor %}
+    <tr class="total-line"><td>Total Assets</td>
+        <td class="num">{{ bs.total_assets | money }}</td></tr>
+
+    <tr class="section"><td colspan="2">Liabilities</td></tr>
+    {% for r in bs.liabilities %}
+    <tr><td>{{ r.account_number }} · {{ r.name }}</td>
+        <td class="num">{{ r.amount | money }}</td></tr>
+    {% else %}
+    <tr><td class="muted">No liability balances</td><td></td></tr>
+    {% endfor %}
+    <tr class="subtotal"><td>Total Liabilities</td>
+        <td class="num">{{ bs.total_liabilities | money }}</td></tr>
+
+    <tr class="section"><td colspan="2">Equity</td></tr>
+    {% for r in bs.equity %}
+    <tr><td>{{ r.account_number }} · {{ r.name }}</td>
+        <td class="num">{{ r.amount | money }}</td></tr>
+    {% endfor %}
+    <tr><td>Net Income (not yet closed)</td>
+        <td class="num">{{ bs.net_income | money }}</td></tr>
+    <tr class="subtotal"><td>Total Equity</td>
+        <td class="num">{{ bs.total_equity | money }}</td></tr>
+
+    <tr class="grand-total {{ 'error-row' if not bs.balanced }}">
+        <td>Total Liabilities &amp; Equity</td>
+        <td class="num">{{ bs.total_liabilities_equity | money }}</td></tr>
+  </tbody>
+</table>
+
+{% if not bs.balanced %}
+<p class="error">The balance sheet does not balance. This is a data-integrity
+bug — every posted entry should keep assets equal to liabilities plus equity.</p>
+{% endif %}
+{% endblock %}

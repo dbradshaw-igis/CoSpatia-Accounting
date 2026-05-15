@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+{% block content %}
+<h1>Customers</h1>
+<p class="lead">The people and businesses you invoice. Payment terms set the
+default due date on a new invoice.</p>
+
+{% if saved %}<p class="ok">Customer saved.</p>{% endif %}
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<table>
+  <thead>
+    <tr><th>Name</th><th>Email</th><th>Billing Address</th><th class="num">Terms</th></tr>
+  </thead>
+  <tbody>
+    {% for c in customers %}
+    <tr>
+      <td>{{ c.name }}</td>
+      <td class="muted">{{ c.email or "—" }}</td>
+      <td class="muted">{{ c.billing_address or "—" }}</td>
+      <td class="num">Net {{ c.terms_days }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="muted">No customers yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>Add a Customer</h2>
+<form method="post" action="/customers" class="stack-form">
+  <label>Name
+    <input type="text" name="name" required>
+  </label>
+  <label>Email
+    <input type="email" name="email">
+  </label>
+  <label>Billing Address
+    <input type="text" name="billing_address">
+  </label>
+  <label>Payment Terms (days)
+    <input type="number" name="terms_days" value="30" min="0" max="365">
+  </label>
+  <button type="submit">Add Customer</button>
+</form>
+{% endblock %}

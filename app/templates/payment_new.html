@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Receive Payment{% endblock %}
+{% block content %}
+<h1>Receive Payment</h1>
+<p class="lead">A payment debits the bank account it lands in and credits
+Accounts Receivable. Enter the amount applied to each open invoice — the
+payment total is their sum.</p>
+
+{% if error %}
+  <p class="{{ 'ok' if 'recorded' in error else 'error' }}">{{ error }}</p>
+{% endif %}
+
+<form method="get" action="/payments/new" class="inline-form">
+  <label>Customer
+    <select name="customer_id" onchange="this.form.submit()">
+      <option value="">— choose —</option>
+      {% for c in customers %}
+      <option value="{{ c.id }}"
+        {{ 'selected' if customer and c.id == customer.id }}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <noscript><button type="submit">Continue</button></noscript>
+</form>
+
+{% if customer %}
+  {% if open_invoices %}
+  <form method="post" action="/payments" class="entry-form">
+    <input type="hidden" name="customer_id" value="{{ customer.id }}">
+    <div class="header-fields">
+      <label>Payment Date
+        <input type="date" name="payment_date" value="{{ today }}" required>
+      </label>
+      <label>Deposit To
+        <select name="deposit_account_id" required>
+          <option value="">—</option>
+          {% for b in banks %}
+          <option value="{{ b.id }}">{{ b.account_number }} · {{ b.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Reference
+        <input type="text" name="reference" placeholder="Check #, confirmation">
+      </label>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Invoice</th><th>Date</th><th>Due</th>
+          <th class="num">Balance</th><th class="num">Amount to Apply</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in open_invoices %}
+        <tr>
+          <td><a href="/invoices/{{ row.invoice.id }}">{{ row.invoice.invoice_number }}</a></td>
+          <td>{{ row.invoice.invoice_date }}</td>
+          <td>{{ row.invoice.due_date }}</td>
+          <td class="num">{{ row.balance | money }}</td>
+          <td><input type="text" name="apply_{{ row.invoice.id }}"
+                     class="num" inputmode="decimal"></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <button type="submit">Record Payment</button>
+  </form>
+  {% else %}
+  <p class="muted">{{ customer.name }} has no open invoices.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

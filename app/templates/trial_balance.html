@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Trial Balance{% endblock %}
+{% block content %}
+<h1>Trial Balance</h1>
+<p class="lead">Every account's balance as of the date below. Total debits equal
+total credits — if they ever do not, that is a data-integrity bug. This is the
+first report an accountant opens, and the CSV is what they import into tax
+software.</p>
+
+<form method="get" action="/trial-balance" class="inline-form">
+  <label>As of <input type="date" name="as_of" value="{{ as_of }}"></label>
+  <button type="submit">Show</button>
+  <a class="button-link" href="/trial-balance.csv">Download CSV</a>
+</form>
+
+<table>
+  <thead>
+    <tr>
+      <th>Number</th><th>Account</th><th>Tax Line</th>
+      <th class="num">Debit</th><th class="num">Credit</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in tb.rows %}
+    <tr>
+      <td class="num">{{ row.account_number }}</td>
+      <td><a href="/account/{{ row.account_id }}">{{ row.name }}</a></td>
+      <td class="{{ 'muted' if row.tax_line else 'unmapped' }}">
+        {{ row.tax_line or "Unmapped" }}</td>
+      <td class="num">{{ row.debit  | money if row.debit  else "" }}</td>
+      <td class="num">{{ row.credit | money if row.credit else "" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">No balances yet — post a journal entry.</td></tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="{{ 'balanced' if tb.balanced else 'error-row' }}">
+      <td colspan="3">Total</td>
+      <td class="num">{{ tb.total_debit  | money }}</td>
+      <td class="num">{{ tb.total_credit | money }}</td>
+    </tr>
+  </tfoot>
+</table>
+{% endblock %}

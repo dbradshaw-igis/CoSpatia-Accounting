@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ result.account.name }}{% endblock %}
+{% block content %}
+<h1>{{ result.account.account_number }} · {{ result.account.name }}</h1>
+<p class="lead">Every posted line that hit this account, with the balance carried
+down the page. {{ type_labels[result.account.type] }} account.</p>
+
+<form method="get" action="/account/{{ result.account.id }}" class="inline-form">
+  <label>From <input type="date" name="start" value="{{ start }}"></label>
+  <label>To <input type="date" name="end" value="{{ end }}"></label>
+  <button type="submit">Show</button>
+</form>
+
+<table>
+  <thead>
+    <tr>
+      <th>Date</th><th>Type</th><th>Reference</th><th>Memo</th>
+      <th class="num">Debit</th><th class="num">Credit</th><th class="num">Balance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="opening">
+      <td colspan="6">Opening Balance</td>
+      <td class="num">{{ result.opening | money }}</td>
+    </tr>
+    {% for line in result.lines %}
+    <tr>
+      <td>{{ line.entry_date }}</td>
+      <td><span class="tag">{{ line.entry_type }}</span></td>
+      <td class="muted">{{ line.reference or "" }}</td>
+      <td>{{ line.memo or "" }}</td>
+      <td class="num">{{ line.debit  | money if line.debit  else "" }}</td>
+      <td class="num">{{ line.credit | money if line.credit else "" }}</td>
+      <td class="num">{{ line.balance | money }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr><td colspan="6">Closing Balance</td>
+        <td class="num">{{ result.closing | money }}</td></tr>
+  </tfoot>
+</table>
+{% endblock %}

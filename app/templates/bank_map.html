@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Confirm Import{% endblock %}
+{% macro column_select(name, selected) -%}
+  <select name="{{ name }}">
+    <option value="-1">— none —</option>
+    {% for index, header in columns %}
+    <option value="{{ index }}" {{ 'selected' if selected == index }}>{{ header }}</option>
+    {% endfor %}
+  </select>
+{%- endmacro %}
+{% block content %}
+<h1>Confirm Import — {{ batch.filename }}</h1>
+<p class="lead">Bank files differ. Confirm which column holds each field. The
+preview below updates when you reload with new choices.</p>
+
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+{% if parse_error %}<p class="error">{{ parse_error }}</p>{% endif %}
+
+<h2>File Preview</h2>
+<table>
+  <thead>
+    <tr>{% for index, header in columns %}<th>{{ header }}</th>{% endfor %}</tr>
+  </thead>
+  <tbody>
+    {% for row in sample %}
+    <tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<form method="post" action="/banking/map/{{ batch.id }}" class="stack-form">
+  <label>Bank Account this file belongs to
+    <select name="bank_account_id" required>
+      <option value="">—</option>
+      {% for b in banks %}
+      <option value="{{ b.id }}">{{ b.account_number }} · {{ b.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Date column
+    {{ column_select("date_col", mapping.date_col) }}
+  </label>
+  <label>Description column
+    {{ column_select("desc_col", mapping.desc_col) }}
+  </label>
+
+  <fieldset>
+    <legend>Amount</legend>
+    <label class="radio">
+      <input type="radio" name="mode" value="single"
+             {{ 'checked' if mapping.mode == 'single' }}>
+      One signed amount column (negative means money out)
+    </label>
+    {{ column_select("amount_col", mapping.amount_col) }}
+    <label class="radio">
+      <input type="radio" name="mode" value="split"
+             {{ 'checked' if mapping.mode == 'split' }}>
+      Separate deposit and withdrawal columns
+    </label>
+    <div class="split-cols">
+      <span>Deposit {{ column_select("deposit_col", mapping.deposit_col) }}</span>
+      <span>Withdrawal {{ column_select("withdrawal_col", mapping.withdrawal_col) }}</span>
+    </div>
+  </fieldset>
+
+  <button type="submit">Import Transactions</button>
+</form>
+
+{% if preview_rows %}
+<h2>Parsed With the Current Guess</h2>
+<table>
+  <thead>
+    <tr><th>Date</th><th>Description</th><th class="num">Amount</th></tr>
+  </thead>
+  <tbody>
+    {% for r in preview_rows %}
+    <tr>
+      <td>{{ r.date }}</td>
+      <td>{{ r.description or "—" }}</td>
+      <td class="num">
+        {% if r.amount_cents >= 0 %}<span class="tag">Deposit</span>{% else %}<span class="tag">Check</span>{% endif %}
+        {{ r.amount_cents | money }}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

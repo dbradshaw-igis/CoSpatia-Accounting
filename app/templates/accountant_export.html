@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Export for Accountant{% endblock %}
+{% block content %}
+<h1>Export for Accountant</h1>
+<p class="lead">One dated ZIP with the books for a fiscal year — the package an
+accountant uses to prepare the return. The pre-flight check below runs first;
+fix what it flags, or proceed and note the exceptions.</p>
+
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<form method="get" action="/accountant-export" class="inline-form">
+  <label>Fiscal Year
+    <input type="number" name="year" value="{{ year }}" min="2000" max="2100">
+  </label>
+  <button type="submit">Run Pre-Flight</button>
+</form>
+
+<p class="muted">Fiscal year FY{{ preflight.year }} covers
+{{ preflight.start }} through {{ preflight.end }}.</p>
+
+<h2>Pre-Flight Check</h2>
+<ul class="checks">
+  {% for check in preflight.checks %}
+  <li class="check check-{{ check.status }}">
+    <span class="check-tag">{{ check.status }}</span>
+    <span><strong>{{ check.name }}.</strong> {{ check.detail }}</span>
+  </li>
+  {% endfor %}
+</ul>
+
+{% if preflight.has_blocker %}
+<p class="error">A blocker has to be resolved before the package can be built.</p>
+{% else %}
+<p>
+  <a class="button-link" href="/accountant-export/download?year={{ preflight.year }}">
+    Download the FY{{ preflight.year }} Package</a>
+</p>
+{% if preflight.has_warning %}
+<p class="muted">Warnings do not stop the export — the package builds and the
+README records every exception so the accountant sees them.</p>
+{% endif %}
+{% endif %}
+
+<h2>What's in the Package</h2>
+<p>Trial balance, general ledger, profit &amp; loss, balance sheet, accounts
+receivable aging, and the tax-line mapping report — each as a CSV, plus a cover
+README with the company details and this pre-flight result. As the module's
+later phases ship, accounts payable, payroll, fixed assets, sales tax, bank
+reconciliation, the cash-flow statement, and PDF copies join the same package.</p>
+{% endblock %}
